@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "Puzzle.h"
+#import "pop.h"
 
 @interface ViewController ()
 @property (nonatomic, strong) Puzzle *puzzle;
@@ -15,6 +16,7 @@
 @property (nonatomic, assign) BOOL foundResults;
 @property (nonatomic, strong) UIButton *calcButton;
 @property (nonatomic, strong) NSMutableArray<CALayer *> *tiles;
+@property (nonatomic, strong) NSArray *results;
 @end
 
 @implementation ViewController
@@ -25,17 +27,17 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getResults:) name:PuzzleFinishedNotification object:nil];
     
     _foundResults = NO;
+    _tiles = [NSMutableArray new];
     _puzzle = [[Puzzle alloc] initWithBeginFrame:@"wrbbrrbbrrbbrrbb" endFrame:@"wbrbbrbrrbrbbrbr" columns:4 row:4];
     
     // Draw begin frame
     CGRect rect = CGRectMake((self.view.bounds.size.width - 150)/2, 20, 150, 150);
     [self drawFrame:_puzzle.beginFrame withSquareRect:rect mainFrame:YES];
-
+    
     _calcButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [_calcButton addTarget:self action:@selector(startCalculate:) forControlEvents:UIControlEventTouchUpInside];
     _calcButton.frame = CGRectMake((self.view.bounds.size.width - 150)/2, 20+150+8, 150, 30);
     [_calcButton setTitle:@"START" forState:UIControlStateNormal];
-    [_calcButton setTitle:@"Calculating" forState:UIControlStateDisabled];
     [_calcButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     _calcButton.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
     _calcButton.layer.masksToBounds = YES;
@@ -58,6 +60,9 @@
     int space = 1;
     CALayer *bgLayer = [CALayer layer];
     bgLayer.frame = rect;
+    if (main) {
+        bgLayer.backgroundColor = [UIColor colorWithWhite:0.8 alpha:1.0].CGColor;
+    }
     
     int tileWidth = (rect.size.width - (_puzzle.columns + 1) * space) / _puzzle.columns;
     int tileHeight = tileWidth;
@@ -100,6 +105,7 @@
 - (void)startCalculate:(UIButton *)sender {
     if (_foundResults == NO) {
         sender.enabled = NO;
+        [_calcButton setTitle:@"Calculating" forState:UIControlStateNormal];
         sender.backgroundColor = [UIColor lightGrayColor];
         _startCalcTime = CFAbsoluteTimeGetCurrent();
         [_puzzle calculateSteps];
@@ -107,7 +113,54 @@
         // Show animation
         sender.enabled = NO;
         [sender setTitle:@"Animating" forState:UIControlStateNormal];
+        NSString *steps = _results.firstObject;
+        int lastStep = 0;
+        CFTimeInterval duration = 0.7;
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
         
+        for (int idx = 0; idx < steps.length; idx++) {
+            int nextStep = 0;
+            if (steps.UTF8String[idx] == 'U') {
+                nextStep = lastStep - 4;
+            } else if (steps.UTF8String[idx] == 'D') {
+                nextStep = lastStep + 4;
+            } else if (steps.UTF8String[idx] == 'L') {
+                nextStep = lastStep - 1;
+            } else {
+                nextStep = lastStep + 1;
+            }
+            
+            CALayer *fromLayer = _tiles[lastStep];
+            CALayer *toLayer = _tiles[nextStep];
+            CGPoint fromPosition = fromLayer.position;
+            CGPoint toPosition = toLayer.position;
+            
+            [CATransaction begin];
+            CABasicAnimation *fromAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
+            fromAnimation.duration = duration;
+            fromAnimation.fromValue = [NSValue valueWithCGPoint:fromPosition];
+            fromAnimation.toValue = [NSValue valueWithCGPoint:toPosition];
+            fromAnimation.beginTime = CACurrentMediaTime() + idx * duration + 0.1;
+            fromAnimation.fillMode = kCAFillModeBoth;
+            [fromLayer addAnimation:fromAnimation forKey:nil];
+            
+            CABasicAnimation *toAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
+            toAnimation.duration = duration;
+            toAnimation.fromValue = [NSValue valueWithCGPoint:toPosition];
+            toAnimation.toValue = [NSValue valueWithCGPoint:fromPosition];
+            toAnimation.beginTime = CACurrentMediaTime() + idx * duration + 0.1;
+            toAnimation.fillMode = kCAFillModeBoth;
+            [toLayer addAnimation:toAnimation forKey:nil];
+            
+            fromLayer.position = toPosition;
+            toLayer.position = fromPosition;
+            [_tiles exchangeObjectAtIndex:lastStep withObjectAtIndex:nextStep];
+            lastStep = nextStep;
+        }
+        [CATransaction commit];
+        _calcButton.enabled = YES;
+        [_calcButton setTitle:@"Show animation" forState:UIControlStateNormal];
     }
 }
 
@@ -115,9 +168,9 @@
     CFAbsoluteTime executionTime = (CFAbsoluteTimeGetCurrent() - _startCalcTime);
     NSLog(@"Calculating took %f s", executionTime);
     
-    NSArray *results = noti.userInfo[@"resutls"];
-    if (results.count > 0) {
-        NSString *steps = results.firstObject;
+    _results = noti.userInfo[@"resutls"];
+    if (_results.count > 0) {
+        NSString *steps = _results.firstObject;
         NSString *beginFrame = _puzzle.beginFrame;
         int lastStep = 0;
         int itemsInRow = 6;

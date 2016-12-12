@@ -16,6 +16,7 @@
 		02E066121DFE4F980087E4DC /* FastestThreadSafeDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E0660D1DFE4F980087E4DC /* FastestThreadSafeDictionary.m */; };
 		02E066131DFE4F980087E4DC /* PUZTimeRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E0660F1DFE4F980087E4DC /* PUZTimeRecord.m */; };
 		02E066141DFE4F980087E4DC /* Puzzle.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E066111DFE4F980087E4DC /* Puzzle.m */; };
+		2531ACA87258C46E404CC3CE /* libPods-Puzzle_iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E5E8A6D27DEE7BCBAFAD465E /* libPods-Puzzle_iOS.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,9 @@
 		02E0660F1DFE4F980087E4DC /* PUZTimeRecord.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PUZTimeRecord.m; sourceTree = "<group>"; };
 		02E066101DFE4F980087E4DC /* Puzzle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Puzzle.h; sourceTree = "<group>"; };
 		02E066111DFE4F980087E4DC /* Puzzle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Puzzle.m; sourceTree = "<group>"; };
+		7E36CDDB73E8FAC7EE664638 /* Pods-Puzzle_iOS.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Puzzle_iOS.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Puzzle_iOS/Pods-Puzzle_iOS.debug.xcconfig"; sourceTree = "<group>"; };
+		A5D49D9764F5159780F45DAD /* Pods-Puzzle_iOS.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Puzzle_iOS.release.xcconfig"; path = "Pods/Target Support Files/Pods-Puzzle_iOS/Pods-Puzzle_iOS.release.xcconfig"; sourceTree = "<group>"; };
+		E5E8A6D27DEE7BCBAFAD465E /* libPods-Puzzle_iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Puzzle_iOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2531ACA87258C46E404CC3CE /* libPods-Puzzle_iOS.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,6 +58,8 @@
 			children = (
 				02E065EF1DFE3CF50087E4DC /* Puzzle_iOS */,
 				02E065EE1DFE3CF50087E4DC /* Products */,
+				A5EC26EA5D9E192A78480CBD /* Pods */,
+				3AE2A031F726EF14A0348BC7 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -102,6 +109,23 @@
 			name = Helper;
 			sourceTree = "<group>";
 		};
+		3AE2A031F726EF14A0348BC7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E5E8A6D27DEE7BCBAFAD465E /* libPods-Puzzle_iOS.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A5EC26EA5D9E192A78480CBD /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				7E36CDDB73E8FAC7EE664638 /* Pods-Puzzle_iOS.debug.xcconfig */,
+				A5D49D9764F5159780F45DAD /* Pods-Puzzle_iOS.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -109,9 +133,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 02E066041DFE3CF50087E4DC /* Build configuration list for PBXNativeTarget "Puzzle_iOS" */;
 			buildPhases = (
+				D1B2B46C90B824DF093DF7C4 /* [CP] Check Pods Manifest.lock */,
 				02E065E91DFE3CF50087E4DC /* Sources */,
 				02E065EA1DFE3CF50087E4DC /* Frameworks */,
 				02E065EB1DFE3CF50087E4DC /* Resources */,
+				A0119F173E63A240454FF003 /* [CP] Embed Pods Frameworks */,
+				77CEABC6DC9E01DEF47ABED0 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -168,6 +195,54 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		77CEABC6DC9E01DEF47ABED0 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Puzzle_iOS/Pods-Puzzle_iOS-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A0119F173E63A240454FF003 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-Puzzle_iOS/Pods-Puzzle_iOS-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D1B2B46C90B824DF093DF7C4 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		02E065E91DFE3CF50087E4DC /* Sources */ = {
@@ -295,6 +370,7 @@
 		};
 		02E066051DFE3CF50087E4DC /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7E36CDDB73E8FAC7EE664638 /* Pods-Puzzle_iOS.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = 2L4985KKX7;
@@ -307,6 +383,7 @@
 		};
 		02E066061DFE3CF50087E4DC /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A5D49D9764F5159780F45DAD /* Pods-Puzzle_iOS.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = 2L4985KKX7;
