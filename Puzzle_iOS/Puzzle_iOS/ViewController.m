@@ -11,7 +11,9 @@
 
 @interface ViewController ()
 @property (nonatomic, strong) Puzzle *puzzle;
-
+@property (nonatomic, assign) CFAbsoluteTime startCalcTime;
+@property (nonatomic, assign) BOOL foundResults;
+@property (nonatomic, strong) UIButton *calcButton;
 @end
 
 @implementation ViewController
@@ -19,22 +21,29 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(getResults:) name:PuzzleFinishedNotification object:nil];
+    
+    _foundResults = NO;
     _puzzle = [[Puzzle alloc] initWithBeginFrame:@"wrbbrrbbrrbbrrbb" endFrame:@"wbrbbrbrrbrbbrbr" columns:4 row:4];
     
     // Draw begin frame
     CGRect rect = CGRectMake((self.view.bounds.size.width - 150)/2, 20, 150, 150);
     [self drawFrame:_puzzle.beginFrame withSquareRect:rect];
 
-    UIButton *calcButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [calcButton addTarget:self action:@selector(startCalculate:) forControlEvents:UIControlEventTouchUpInside];
-    calcButton.frame = CGRectMake((self.view.bounds.size.width - 150)/2, 20+150+8, 150, 30);
-    [calcButton setTitle:@"START" forState:UIControlStateNormal];
-    [calcButton setTitle:@"Calculating" forState:UIControlStateDisabled];
-    [calcButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    calcButton.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
-    calcButton.layer.masksToBounds = YES;
-    calcButton.layer.cornerRadius = 4;
-    [self.view addSubview:calcButton];
+    _calcButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_calcButton addTarget:self action:@selector(startCalculate:) forControlEvents:UIControlEventTouchUpInside];
+    _calcButton.frame = CGRectMake((self.view.bounds.size.width - 150)/2, 20+150+8, 150, 30);
+    [_calcButton setTitle:@"START" forState:UIControlStateNormal];
+    [_calcButton setTitle:@"Calculating" forState:UIControlStateDisabled];
+    [_calcButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    _calcButton.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
+    _calcButton.layer.masksToBounds = YES;
+    _calcButton.layer.cornerRadius = 4;
+    [self.view addSubview:_calcButton];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)drawFrame:(NSString *)frame withSquareRect:(CGRect)rect {
@@ -80,16 +89,24 @@
 }
 
 - (void)startCalculate:(UIButton *)sender {
-    sender.enabled = NO;
-    sender.backgroundColor = [UIColor lightGrayColor];
+    if (_foundResults == NO) {
+        sender.enabled = NO;
+        sender.backgroundColor = [UIColor lightGrayColor];
+        _startCalcTime = CFAbsoluteTimeGetCurrent();
+        [_puzzle calculateSteps];
+    } else {
+        // Show animation
+        NSLog(@"Start animation");
+    }
+}
+
+- (void)getResults:(NSNotification *)noti {
+    CFAbsoluteTime executionTime = (CFAbsoluteTimeGetCurrent() - _startCalcTime);
+    NSLog(@"Calculating took %f s", executionTime);
     
-    CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
-    NSArray *resuts = [_puzzle calculateSteps];
-    CFAbsoluteTime executionTime = (CFAbsoluteTimeGetCurrent() - startTime);
-    NSLog(@"Dispatch took %f s", executionTime);
-    
-    if (resuts.count > 0) {
-        NSString *steps = resuts.firstObject;
+    NSArray *results = noti.userInfo[@"resutls"];
+    if (results.count > 0) {
+        NSString *steps = results.firstObject;
         NSString *beginFrame = _puzzle.beginFrame;
         int lastStep = 0;
         int itemsInRow = 6;
@@ -128,6 +145,11 @@
             [self drawFrame:beginFrame withSquareRect:CGRectMake(originX, originY, tilesWidth, tilesHeight)];
         }
     }
+    
+    _foundResults = YES;
+    [_calcButton setTitle:@"Show animation" forState:UIControlStateNormal];
+    _calcButton.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
+    _calcButton.enabled = YES;
 }
 
 - (void)didReceiveMemoryWarning {

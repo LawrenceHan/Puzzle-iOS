@@ -15,6 +15,7 @@
 #include <sys/sysctl.h>
 
 #define RecordTime
+NSString * const PuzzleFinishedNotification = @"com.hanguang.app.puzzle.PuzzleFinishedNotification";
 
 @interface PuzzleFrame : NSObject
 @property (nonatomic, copy) NSString *steps;
@@ -98,6 +99,7 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
         pthread_mutex_init(&_frameMutexLock, NULL);
         pthread_mutex_init(&_stepResultMutexLock, NULL);
         _moveTileCountDict = [NSMutableDictionary new];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(finishedCalculating:) name:PuzzleFinishedNotification object:nil];
     }
     return self;
 }
@@ -107,13 +109,15 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
     pthread_mutex_destroy(&_routesIndexMutexLock);
     pthread_mutex_destroy(&_frameMutexLock);
     pthread_mutex_destroy(&_stepResultMutexLock);
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (int)totalTilesCount {
     return _columns * _rows;
 }
 
-- (NSArray <NSString *>*)calculateSteps {
+- (void)calculateSteps {
+    _foundResults = NO;
     _routesQueue = [NSArray new];
     _routesNextQueue = [NSMutableArray new];
     _frameSnapshot = [FastestThreadSafeDictionary new];
@@ -149,12 +153,10 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
         [thread start];
     }
     
-    _foundResults = NO;
-    while (_foundResults == NO) {
-        [NSThread sleepForTimeInterval:0];
-    }
-    
     //        NSLog(@"Total MT_Count: %@", _moveTileCountDict[@"total"]);
+}
+
+- (void)finishedCalculating:(NSNotification *)noti {
     for (NSThread *thread in _threads) {
 #ifdef RecordTime
         NSLog(@"index:%@, char:%@, string:%@, hash:%@, frame:%@, routes:%@, %@",
@@ -168,8 +170,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #endif
         [thread cancel];
     }
-    
-    return [_stepResults copy];
 }
 
 - (void)startCalcOnThread {
@@ -184,13 +184,16 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
         pthread_mutex_lock(&_routesIndexMutexLock);
         if (_threadCount == 0) {
             // Check if we have a result
-            if (_stepResults.count > 0) {
+            if (_stepResults.count > 0 && _threadCount == 0) {
                 _isThreadRunning = NO;
                 _foundResults = YES;
                 for (NSString *result in _stepResults) {
                     NSLog(@"Steps: %@, steps count: %ld == thread: %@", result, (long)result.length, [NSThread currentThread].name);
                 }
 //                _stepResults = nil;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [[NSNotificationCenter defaultCenter] postNotificationName:PuzzleFinishedNotification object:nil userInfo:@{@"resutls":[_stepResults copy]}];
+                });
                 pthread_mutex_unlock(&_routesIndexMutexLock);
 #ifdef RecordTime
                 [_timeRecorder continueTimeRecord:getIndexKey];
