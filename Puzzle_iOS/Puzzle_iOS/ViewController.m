@@ -14,6 +14,7 @@
 @property (nonatomic, assign) CFAbsoluteTime startCalcTime;
 @property (nonatomic, assign) BOOL foundResults;
 @property (nonatomic, strong) UIButton *calcButton;
+@property (nonatomic, strong) NSMutableArray<CALayer *> *tiles;
 @end
 
 @implementation ViewController
@@ -28,7 +29,7 @@
     
     // Draw begin frame
     CGRect rect = CGRectMake((self.view.bounds.size.width - 150)/2, 20, 150, 150);
-    [self drawFrame:_puzzle.beginFrame withSquareRect:rect];
+    [self drawFrame:_puzzle.beginFrame withSquareRect:rect mainFrame:YES];
 
     _calcButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [_calcButton addTarget:self action:@selector(startCalculate:) forControlEvents:UIControlEventTouchUpInside];
@@ -47,6 +48,10 @@
 }
 
 - (void)drawFrame:(NSString *)frame withSquareRect:(CGRect)rect {
+    [self drawFrame:frame withSquareRect:rect mainFrame:NO];
+}
+
+- (void)drawFrame:(NSString *)frame withSquareRect:(CGRect)rect mainFrame:(BOOL)main {
     BOOL Not_A_Square = rect.size.width == rect.size.height;
     NSAssert(Not_A_Square, @"Must be draw on a square shape");
     
@@ -82,6 +87,10 @@
             tile.backgroundColor = color;
             
             [bgLayer addSublayer:tile];
+            
+            if (main) {
+                [_tiles addObject:tile];
+            }
         }
     }
     
@@ -96,7 +105,9 @@
         [_puzzle calculateSteps];
     } else {
         // Show animation
-        NSLog(@"Start animation");
+        sender.enabled = NO;
+        [sender setTitle:@"Animating" forState:UIControlStateNormal];
+        
     }
 }
 
