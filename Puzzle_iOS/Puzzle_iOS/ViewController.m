@@ -29,6 +29,7 @@
     [calcButton addTarget:self action:@selector(startCalculate:) forControlEvents:UIControlEventTouchUpInside];
     calcButton.frame = CGRectMake((self.view.bounds.size.width - 150)/2, 20+150+8, 150, 30);
     [calcButton setTitle:@"START" forState:UIControlStateNormal];
+    [calcButton setTitle:@"Calculating" forState:UIControlStateDisabled];
     [calcButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     calcButton.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
     calcButton.layer.masksToBounds = YES;
@@ -60,12 +61,12 @@
             if (frame.UTF8String[beginIndex] == 'w') {
                 color = [UIColor whiteColor].CGColor;
                 tile.borderColor = [UIColor blackColor].CGColor;
-                tile.borderWidth = 1;
+                tile.borderWidth = rect.size.width / 150.f;
             } else if (frame.UTF8String[beginIndex] == 'r') {
                 color = [UIColor colorWithRed:205.f/255.f green:38.f/255.f blue:38.f/255.f alpha:1].CGColor;
             } else {
                 color = [UIColor blueColor].CGColor;
-                color = [UIColor colorWithRed:70.f/255.f green:130.f/255.f blue:180.f/255.f alpha:1].CGColor;
+                color = [UIColor colorWithRed:32.f/255.f green:64.f/255.f blue:207.f/255.f alpha:1].CGColor;
             }
             
             tile.frame = CGRectMake(originX, originY, tileWidth, tileHeight);
@@ -79,6 +80,9 @@
 }
 
 - (void)startCalculate:(UIButton *)sender {
+    sender.enabled = NO;
+    sender.backgroundColor = [UIColor lightGrayColor];
+    
     CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
     NSArray *resuts = [_puzzle calculateSteps];
     CFAbsoluteTime executionTime = (CFAbsoluteTimeGetCurrent() - startTime);
@@ -120,7 +124,7 @@
             if (column == 0) rows += 1;
             
             int originX = column * (widthSpace + tilesWidth) + widthSpace;
-            int originY = rows * (heightSpace + tilesHeight) + heightSpace + 20+150+8+30;
+            int originY = rows * (heightSpace + tilesHeight) + heightSpace + (20+150+8+30);
             [self drawFrame:beginFrame withSquareRect:CGRectMake(originX, originY, tilesWidth, tilesHeight)];
         }
     }
