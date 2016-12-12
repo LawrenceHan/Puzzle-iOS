@@ -113,7 +113,7 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
     return _columns * _rows;
 }
 
-- (void)calculateSteps {
+- (NSArray <NSString *>*)calculateSteps {
     _routesQueue = [NSArray new];
     _routesNextQueue = [NSMutableArray new];
     _frameSnapshot = [FastestThreadSafeDictionary new];
@@ -168,6 +168,8 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #endif
         [thread cancel];
     }
+    
+    return [_stepResults copy];
 }
 
 - (void)startCalcOnThread {
@@ -188,7 +190,7 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
                 for (NSString *result in _stepResults) {
                     NSLog(@"Steps: %@, steps count: %ld == thread: %@", result, (long)result.length, [NSThread currentThread].name);
                 }
-                _stepResults = nil;
+//                _stepResults = nil;
                 pthread_mutex_unlock(&_routesIndexMutexLock);
 #ifdef RecordTime
                 [_timeRecorder continueTimeRecord:getIndexKey];

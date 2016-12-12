@@ -19,6 +19,6 @@
 - (instancetype)new NS_UNAVAILABLE;
 
 - (instancetype)initWithBeginFrame:(NSString *)beginFrame endFrame:(NSString *)endFrame columns:(int)columns row:(int)rows;
-- (void)calculateSteps;
+- (NSArray <NSString *>*)calculateSteps;
 
 @end
