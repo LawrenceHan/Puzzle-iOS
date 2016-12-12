@@ -13,6 +13,9 @@
 		02E065FB1DFE3CF50087E4DC /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 02E065F91DFE3CF50087E4DC /* Main.storyboard */; };
 		02E065FD1DFE3CF50087E4DC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 02E065FC1DFE3CF50087E4DC /* Assets.xcassets */; };
 		02E066001DFE3CF50087E4DC /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 02E065FE1DFE3CF50087E4DC /* LaunchScreen.storyboard */; };
+		02E066121DFE4F980087E4DC /* FastestThreadSafeDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E0660D1DFE4F980087E4DC /* FastestThreadSafeDictionary.m */; };
+		02E066131DFE4F980087E4DC /* PUZTimeRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E0660F1DFE4F980087E4DC /* PUZTimeRecord.m */; };
+		02E066141DFE4F980087E4DC /* Puzzle.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E066111DFE4F980087E4DC /* Puzzle.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +29,12 @@
 		02E065FC1DFE3CF50087E4DC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		02E065FF1DFE3CF50087E4DC /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		02E066011DFE3CF50087E4DC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		02E0660C1DFE4F980087E4DC /* FastestThreadSafeDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FastestThreadSafeDictionary.h; sourceTree = "<group>"; };
+		02E0660D1DFE4F980087E4DC /* FastestThreadSafeDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FastestThreadSafeDictionary.m; sourceTree = "<group>"; };
+		02E0660E1DFE4F980087E4DC /* PUZTimeRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PUZTimeRecord.h; sourceTree = "<group>"; };
+		02E0660F1DFE4F980087E4DC /* PUZTimeRecord.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PUZTimeRecord.m; sourceTree = "<group>"; };
+		02E066101DFE4F980087E4DC /* Puzzle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Puzzle.h; sourceTree = "<group>"; };
+		02E066111DFE4F980087E4DC /* Puzzle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Puzzle.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +67,7 @@
 		02E065EF1DFE3CF50087E4DC /* Puzzle_iOS */ = {
 			isa = PBXGroup;
 			children = (
+				02E0660B1DFE4F8D0087E4DC /* Helper */,
 				02E065F31DFE3CF50087E4DC /* AppDelegate.h */,
 				02E065F41DFE3CF50087E4DC /* AppDelegate.m */,
 				02E065F61DFE3CF50087E4DC /* ViewController.h */,
@@ -77,6 +87,19 @@
 				02E065F11DFE3CF50087E4DC /* main.m */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		02E0660B1DFE4F8D0087E4DC /* Helper */ = {
+			isa = PBXGroup;
+			children = (
+				02E0660C1DFE4F980087E4DC /* FastestThreadSafeDictionary.h */,
+				02E0660D1DFE4F980087E4DC /* FastestThreadSafeDictionary.m */,
+				02E0660E1DFE4F980087E4DC /* PUZTimeRecord.h */,
+				02E0660F1DFE4F980087E4DC /* PUZTimeRecord.m */,
+				02E066101DFE4F980087E4DC /* Puzzle.h */,
+				02E066111DFE4F980087E4DC /* Puzzle.m */,
+			);
+			name = Helper;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -153,7 +176,10 @@
 			files = (
 				02E065F81DFE3CF50087E4DC /* ViewController.m in Sources */,
 				02E065F51DFE3CF50087E4DC /* AppDelegate.m in Sources */,
+				02E066131DFE4F980087E4DC /* PUZTimeRecord.m in Sources */,
+				02E066141DFE4F980087E4DC /* Puzzle.m in Sources */,
 				02E065F21DFE3CF50087E4DC /* main.m in Sources */,
+				02E066121DFE4F980087E4DC /* FastestThreadSafeDictionary.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
