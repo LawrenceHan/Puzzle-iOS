@@ -19,7 +19,9 @@
 @property (nonatomic, strong) NSArray *results;
 @end
 
-@implementation ViewController
+@implementation ViewController {
+    NSMutableArray *_animationValueDicts;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -28,6 +30,7 @@
     
     _foundResults = NO;
     _tiles = [NSMutableArray new];
+    _animationValueDicts = [NSMutableArray new];
     _puzzle = [[Puzzle alloc] initWithBeginFrame:@"wrbbrrbbrrbbrrbb" endFrame:@"wbrbbrbrrbrbbrbr" columns:4 row:4];
     
     // Draw begin frame
@@ -60,9 +63,6 @@
     int space = 1;
     CALayer *bgLayer = [CALayer layer];
     bgLayer.frame = rect;
-    if (main) {
-        bgLayer.backgroundColor = [UIColor colorWithWhite:0.8 alpha:1.0].CGColor;
-    }
     
     int tileWidth = (rect.size.width - (_puzzle.columns + 1) * space) / _puzzle.columns;
     int tileHeight = tileWidth;
@@ -105,21 +105,29 @@
 - (void)startCalculate:(UIButton *)sender {
     if (_foundResults == NO) {
         sender.enabled = NO;
-        [_calcButton setTitle:@"Calculating" forState:UIControlStateNormal];
+        [sender setTitle:@"Calculating" forState:UIControlStateNormal];
         sender.backgroundColor = [UIColor lightGrayColor];
         _startCalcTime = CFAbsoluteTimeGetCurrent();
         [_puzzle calculateSteps];
     } else {
         // Show animation
         sender.enabled = NO;
+        sender.backgroundColor = [UIColor lightGrayColor];
         [sender setTitle:@"Animating" forState:UIControlStateNormal];
         NSString *steps = _results.firstObject;
         int lastStep = 0;
         CFTimeInterval duration = 0.7;
+        
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
+        [CATransaction setCompletionBlock:^{
+            sender.enabled = YES;
+            [sender setTitle:@"Show animation" forState:UIControlStateNormal];
+            sender.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
+        }];
         
         for (int idx = 0; idx < steps.length; idx++) {
+            [CATransaction begin];
             int nextStep = 0;
             if (steps.UTF8String[idx] == 'U') {
                 nextStep = lastStep - 4;
@@ -136,7 +144,30 @@
             CGPoint fromPosition = fromLayer.position;
             CGPoint toPosition = toLayer.position;
             
-            [CATransaction begin];
+            
+            fromLayer.position = toPosition;
+            toLayer.position = fromPosition;
+            [_tiles exchangeObjectAtIndex:lastStep withObjectAtIndex:nextStep];
+            lastStep = nextStep;
+            
+            NSDictionary *dict = @{@"laststep":@(lastStep), @"nextstep":@(nextStep)};
+            [_animationValueDicts addObject:dict];
+//            POPBasicAnimation *fromAnimation = [POPBasicAnimation animationWithPropertyNamed:kPOPLayerPosition];
+//            fromAnimation.duration = duration;
+//            fromAnimation.beginTime = CACurrentMediaTime() + idx * duration + 0.1;
+//            fromAnimation.fromValue = [NSValue valueWithCGPoint:fromPosition];
+//            fromAnimation.toValue = [NSValue valueWithCGPoint:toPosition];
+//            fromAnimation.removedOnCompletion = NO;
+//            [fromLayer pop_addAnimation:fromAnimation forKey:nil];
+//            
+//            POPBasicAnimation *toAnimation = [POPBasicAnimation animationWithPropertyNamed:kPOPLayerPosition];
+//            toAnimation.duration = duration;
+//            toAnimation.beginTime = CACurrentMediaTime() + idx * duration + 0.1;
+//            toAnimation.fromValue = [NSValue valueWithCGPoint:toPosition];
+//            toAnimation.toValue = [NSValue valueWithCGPoint:fromPosition];
+//            toAnimation.removedOnCompletion = NO;
+//            [toLayer pop_addAnimation:toAnimation forKey:nil];
+            
             CABasicAnimation *fromAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
             fromAnimation.duration = duration;
             fromAnimation.fromValue = [NSValue valueWithCGPoint:fromPosition];
@@ -153,14 +184,9 @@
             toAnimation.fillMode = kCAFillModeBoth;
             [toLayer addAnimation:toAnimation forKey:nil];
             
-            fromLayer.position = toPosition;
-            toLayer.position = fromPosition;
-            [_tiles exchangeObjectAtIndex:lastStep withObjectAtIndex:nextStep];
-            lastStep = nextStep;
+            [CATransaction commit];
         }
         [CATransaction commit];
-        _calcButton.enabled = YES;
-        [_calcButton setTitle:@"Show animation" forState:UIControlStateNormal];
     }
 }
 
