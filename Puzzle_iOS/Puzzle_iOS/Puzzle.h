@@ -22,5 +22,6 @@ extern NSString * const PuzzleFinishedNotification;
 
 - (instancetype)initWithBeginFrame:(NSString *)beginFrame endFrame:(NSString *)endFrame columns:(int)columns row:(int)rows;
 - (void)calculateSteps;
+- (int)availableThreadCount;
 
 @end

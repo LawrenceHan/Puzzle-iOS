@@ -14,7 +14,7 @@
 #import "FastestThreadSafeDictionary.h"
 #include <sys/sysctl.h>
 
-#define RecordTime
+//#define RecordTime
 NSString * const PuzzleFinishedNotification = @"com.hanguang.app.puzzle.PuzzleFinishedNotification";
 
 @interface PuzzleFrame : NSObject
@@ -33,7 +33,6 @@ NSString * const PuzzleFinishedNotification = @"com.hanguang.app.puzzle.PuzzleFi
 @end
 
 @interface Puzzle ()
-@property (nonatomic, assign) NSUInteger totalStepCounts;
 @property (nonatomic, strong) FastestThreadSafeDictionary *frameSnapshot;
 @property (nonatomic, strong) NSMutableArray *stepResults;
 @property (nonatomic, assign) BOOL foundResults;
@@ -58,15 +57,6 @@ static NSString *routesKey = @"routes";
 static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 
 @implementation Puzzle {
-    NSLock * _routesQueueLock;
-    NSLock * _routesIndexLock;
-    NSLock * _frameLock;
-    NSLock * _stepResultLock;
-    int32_t volatile _frameLockFlag;
-    int32_t volatile _routesIndexFlag;
-    os_unfair_lock _routesIndexSpinLock;
-    os_unfair_lock _routesQueueSpinLock;
-    os_unfair_lock _frameSpinLock;
     pthread_mutex_t _routesQueueMutexLock;
     pthread_mutex_t _routesIndexMutexLock;
     pthread_mutex_t _frameMutexLock;
@@ -83,17 +73,7 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
         _endFrame = endFrame;
         _columns = columns;
         _rows = rows;
-        
-        _routesQueueLock = [[NSLock alloc] init];
-        _routesIndexLock = [[NSLock alloc] init];
-        _frameLock = [[NSLock alloc] init];
-        _stepResultLock = [[NSLock alloc] init];
         _timeRecorder = [PUZTimeRecord new];
-        _frameLockFlag = 0;
-        _routesIndexFlag = 0;
-        _routesIndexSpinLock = OS_UNFAIR_LOCK_INIT;
-        _routesQueueSpinLock = OS_UNFAIR_LOCK_INIT;
-        _frameSpinLock = OS_UNFAIR_LOCK_INIT;
         pthread_mutex_init(&_routesQueueMutexLock, NULL);
         pthread_mutex_init(&_routesIndexMutexLock, NULL);
         pthread_mutex_init(&_frameMutexLock, NULL);
@@ -116,13 +96,16 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
     return _columns * _rows;
 }
 
+- (int)availableThreadCount {
+    return _availableThreadCount;
+}
+
 - (void)calculateSteps {
     _foundResults = NO;
     _routesQueue = [NSArray new];
     _routesNextQueue = [NSMutableArray new];
     _frameSnapshot = [FastestThreadSafeDictionary new];
     _stepResults = [NSMutableArray new];
-    _totalStepCounts = 0;
     _threadCount = 0;
     _routesIndex = -1;
     
@@ -139,8 +122,14 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
     _routesCount = 0;
     _frameSnapshot[[NSString stringWithFormat:@"%s", chars]] = @(frame.steps.length);
     
+    
+#if TARGET_OS_SIMULATOR
+    _availableThreadCount = 4;
+#elif TARGET_OS_IPHONE
+    _availableThreadCount = cpuCoreCount();
+#endif
+    
     _isThreadRunning = YES;
-    _availableThreadCount = 4;//cpuCoreCount();
     _threads = [NSMutableArray arrayWithCapacity:_availableThreadCount];
     for (int i = 0; i < _availableThreadCount; i++) {
         NSThread *thread = [[NSThread alloc] initWithTarget:self selector:@selector(startCalcOnThread) object:nil];
@@ -177,10 +166,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #ifdef RecordTime
         [_timeRecorder beginTimeRecord:getIndexKey];
 #endif
-        //    [_routesIndexLock lock];
-        //    os_unfair_lock_lock(&_routesIndexSpinLock);
-        //        pthread_mutex_lock(&_routesIndexMutexLock);
-        
         pthread_mutex_lock(&_routesIndexMutexLock);
         if (_threadCount == 0) {
             // Check if we have a result
@@ -190,7 +175,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
                 for (NSString *result in _stepResults) {
                     NSLog(@"Steps: %@, steps count: %ld == thread: %@", result, (long)result.length, [NSThread currentThread].name);
                 }
-//                _stepResults = nil;
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [[NSNotificationCenter defaultCenter] postNotificationName:PuzzleFinishedNotification object:nil userInfo:@{@"resutls":[_stepResults copy]}];
                 });
@@ -199,19 +183,12 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
                 [_timeRecorder continueTimeRecord:getIndexKey];
 #endif
                 return;
-                //                [_routesIndexLock unlock];
-                //                os_unfair_lock_unlock(&_routesIndexSpinLock);
-                
-                
-                //                    return -1;
             } else {
                 if (_isThreadRunning) {
-//                    _routesIndex = 0;
                     _switchedQueue = YES;
                     _threadCount += 1;
                     _routesQueue = [_routesNextQueue copy];
                     [_routesNextQueue removeAllObjects];
-//                    _routesCount = (int)_routesQueue.count;
                     for (NSThread *thread in _threads) {
                         thread.threadDictionary[endIndexKey] = @0;
                     }
@@ -226,7 +203,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
         }
         pthread_mutex_unlock(&_routesIndexMutexLock);
         
-//        NSLog(@"before: %@", _routesQueue);
         BOOL shouldSleep = [[NSThread currentThread].threadDictionary[endIndexKey] integerValue] == -1;
         if (shouldSleep) {
 #ifdef RecordTime
@@ -247,7 +223,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
             int beginIndex = 0 + indexOffset;
             int endIndex = indexOffset + (indexLimit - 1);
             
-//            NSLog(@"thread: %i, limit: %i, offset: %i, begin: %i, end: %i", threadIndex, indexLimit, indexOffset, beginIndex, endIndex);
             pthread_mutex_unlock(&_routesIndexMutexLock);
 #ifdef RecordTime
             [_timeRecorder continueTimeRecord:getIndexKey];
@@ -291,23 +266,16 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
             [NSThread currentThread].threadDictionary[endIndexKey] = @(-1);
             pthread_mutex_lock(&_routesIndexMutexLock);
             _threadCount -= 1;
-//            NSLog(@"after: %@", _routesQueue);
             pthread_mutex_unlock(&_routesIndexMutexLock);
-            
-            //        [_routesIndexLock lock];
-            //            os_unfair_lock_lock(&_routesIndexSpinLock);
-            //            os_unfair_lock_unlock(&_routesIndexSpinLock);
-            //        [_routesIndexLock unlock];
         }
     }}
 }
 
+/*
 - (int)getShareIndex {
 #ifdef RecordTime
     [_timeRecorder beginTimeRecord:getIndexKey];
 #endif
-    //    [_routesIndexLock lock];
-    //    os_unfair_lock_lock(&_routesIndexSpinLock);
     pthread_mutex_lock(&_routesIndexMutexLock);
     if (_routesIndex < _routesCount - 1) {
         _routesIndex += 1;
@@ -321,8 +289,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
                     NSLog(@"Steps: %@, steps count: %ld == thread: %@", result, (long)result.length, [NSThread currentThread].name);
                 }
                 _stepResults = nil;
-                //                [_routesIndexLock unlock];
-                //                os_unfair_lock_unlock(&_routesIndexSpinLock);
                 pthread_mutex_unlock(&_routesIndexMutexLock);
 #ifdef RecordTime
                 [_timeRecorder continueTimeRecord:getIndexKey];
@@ -336,8 +302,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
                 _routesCount = (int)_routesQueue.count;
             }
         } else {
-            //            [_routesIndexLock unlock];
-            //            os_unfair_lock_unlock(&_routesIndexSpinLock);
             pthread_mutex_unlock(&_routesIndexMutexLock);
 #ifdef RecordTime
             [_timeRecorder continueTimeRecord:getIndexKey];
@@ -345,44 +309,42 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
             return -1;
         }
     }
-    //    os_unfair_lock_unlock(&_routesIndexSpinLock);
-    //    [_routesIndexLock unlock];
     pthread_mutex_unlock(&_routesIndexMutexLock);
-    
 #ifdef RecordTime
     [_timeRecorder continueTimeRecord:getIndexKey];
 #endif
-    
     return _routesIndex;
 }
+*/
 
-- (void)moveTileWithFrame:(PuzzleFrame *)puzzleFrame nextStep:(int)nextStep direction:(NSString *)direction/* tempLog:(NSString *)tempLog tempIndex:(int)tempIndex */ {
+- (void)moveTileWithFrame:(PuzzleFrame *)puzzleFrame nextStep:(int)nextStep direction:(NSString *)direction {
 #ifdef RecordTime
     [_timeRecorder beginTimeRecord:charKey];
 #endif
-    //    NSNumber *totalCount;
-    //    if ([_moveTileCountDict objectForKey:@"total"] == nil) {
-    //        totalCount = @1;
-    //    } else {
-    //        int total = [[_moveTileCountDict objectForKey:@"total"] intValue];
-    //        total +=1;
-    //        totalCount = @(total);
-    //    }
-    //    _moveTileCountDict[@"total"] = totalCount;
-    //
-    //    NSNumber *moveTileCount;
-    //    if ([_moveTileCountDict objectForKey:[NSThread currentThread].name] == nil) {
-    //        moveTileCount = @1;
-    //    } else {
-    //        int count = [[_moveTileCountDict objectForKey:[NSThread currentThread].name] intValue];
-    //        count +=1;
-    //        moveTileCount = @(count);
-    //    }
-    //    _moveTileCountDict[[NSThread currentThread].name] = moveTileCount;
+    /*
+        NSNumber *totalCount;
+        if ([_moveTileCountDict objectForKey:@"total"] == nil) {
+            totalCount = @1;
+        } else {
+            int total = [[_moveTileCountDict objectForKey:@"total"] intValue];
+            total +=1;
+            totalCount = @(total);
+        }
+        _moveTileCountDict[@"total"] = totalCount;
+    
+        NSNumber *moveTileCount;
+        if ([_moveTileCountDict objectForKey:[NSThread currentThread].name] == nil) {
+            moveTileCount = @1;
+        } else {
+            int count = [[_moveTileCountDict objectForKey:[NSThread currentThread].name] intValue];
+            count +=1;
+            moveTileCount = @(count);
+        }
+        _moveTileCountDict[[NSThread currentThread].name] = moveTileCount;
+    */
     
     char *chars = malloc(_endFrame.length+1);
     memcpy(chars, puzzleFrame.frame, _endFrame.length+1);
-    
 #ifdef RecordTime
     [_timeRecorder continueTimeRecord:charKey];
 #endif
@@ -390,7 +352,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #ifdef RecordTime
     [_timeRecorder beginTimeRecord:stringKey];
 #endif
-    
     NSString *steps = [puzzleFrame.steps stringByAppendingString:direction];
     NSInteger stepsLength = steps.length;
     int currentStep = puzzleFrame.currentStep;
@@ -399,7 +360,6 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
     chars[currentStep] = chars[nextStep];
     chars[nextStep] = temp;
     NSString *newFrame = [NSString stringWithFormat:@"%s", chars];
-    
 #ifdef RecordTime
     [_timeRecorder continueTimeRecord:stringKey];
 #endif
@@ -407,15 +367,9 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #ifdef RecordTime
     [_timeRecorder beginTimeRecord:hashKey];
 #endif
-    
     if (newFrame.hash == _endFrame.hash) {
-        //        [_stepResultLock lock];
         pthread_mutex_lock(&_stepResultMutexLock);
         [_stepResults addObject:steps];
-        //        [_stepResultLock unlock];
-#ifdef RecordTime
-        NSLog(@"%@ + step:%@ = %@, %@", puzzleFrame.steps, direction, steps, [NSThread currentThread].name);
-#endif
         pthread_mutex_unlock(&_stepResultMutexLock);
     }
 #ifdef RecordTime
@@ -425,29 +379,14 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #ifdef RecordTime
     [_timeRecorder beginTimeRecord:frameKey];
 #endif
-    
-    //    while(!OSAtomicCompareAndSwap32(0, 1, &_frameLockFlag));
-    //    os_unfair_lock_lock(&_frameSpinLock);
-    //    pthread_mutex_lock(&_frameMutexLock);
     NSInteger length = [[_frameSnapshot objectForKey:newFrame] integerValue];
-    //    pthread_mutex_unlock(&_frameMutexLock);
-    //    os_unfair_lock_unlock(&_frameSpinLock);
-    //    OSAtomicCompareAndSwap32(1, 0, &_frameLockFlag);
-    
     if (length != 0) {
         if (length < stepsLength) {
             return;
         }
     } else {
-        //        while(!OSAtomicCompareAndSwap32(0, 1, &_frameLockFlag));
-        //        os_unfair_lock_lock(&_frameSpinLock);
-        //        pthread_mutex_lock(&_frameMutexLock);
         [_frameSnapshot setObject:@(stepsLength) forKey:newFrame];
-        //        pthread_mutex_unlock(&_frameMutexLock);
-        //        os_unfair_lock_unlock(&_frameSpinLock);
-        //        OSAtomicCompareAndSwap32(1, 0, &_frameLockFlag);
     }
-    
 #ifdef RecordTime
     [_timeRecorder continueTimeRecord:frameKey];
 #endif
@@ -455,21 +394,15 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #ifdef RecordTime
     [_timeRecorder beginTimeRecord:routesKey];
 #endif
-    
     PuzzleFrame *newPuzzleFrame = [PuzzleFrame new];
     newPuzzleFrame.frame = chars;
     newPuzzleFrame.steps = steps;
     newPuzzleFrame.previousStep = currentStep;
     newPuzzleFrame.currentStep = nextStep;
-    
-    //    [_routesQueueLock lock];
-    //    os_unfair_lock_lock(&_routesQueueSpinLock);
+
     pthread_mutex_lock(&_routesQueueMutexLock);
     [_routesNextQueue addObject:newPuzzleFrame];
     pthread_mutex_unlock(&_routesQueueMutexLock);
-    //    os_unfair_lock_unlock(&_routesQueueSpinLock);
-    //    [_routesQueueLock unlock];
-    
 #ifdef RecordTime
     [_timeRecorder continueTimeRecord:routesKey];
 #endif

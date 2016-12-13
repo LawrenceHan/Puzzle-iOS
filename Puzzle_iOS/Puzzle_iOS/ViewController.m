@@ -8,20 +8,18 @@
 
 #import "ViewController.h"
 #import "Puzzle.h"
-#import "pop.h"
 
-@interface ViewController ()
+@interface ViewController () <CAAnimationDelegate>
 @property (nonatomic, strong) Puzzle *puzzle;
 @property (nonatomic, assign) CFAbsoluteTime startCalcTime;
 @property (nonatomic, assign) BOOL foundResults;
 @property (nonatomic, strong) UIButton *calcButton;
 @property (nonatomic, strong) NSMutableArray<CALayer *> *tiles;
 @property (nonatomic, strong) NSArray *results;
+@property (nonatomic, strong) UILabel *resultLabel;
 @end
 
-@implementation ViewController {
-    NSMutableArray *_animationValueDicts;
-}
+@implementation ViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -30,7 +28,6 @@
     
     _foundResults = NO;
     _tiles = [NSMutableArray new];
-    _animationValueDicts = [NSMutableArray new];
     _puzzle = [[Puzzle alloc] initWithBeginFrame:@"wrbbrrbbrrbbrrbb" endFrame:@"wbrbbrbrrbrbbrbr" columns:4 row:4];
     
     // Draw begin frame
@@ -114,9 +111,11 @@
         sender.enabled = NO;
         sender.backgroundColor = [UIColor lightGrayColor];
         [sender setTitle:@"Animating" forState:UIControlStateNormal];
+        NSMutableArray *positions = [[_tiles valueForKeyPath:@"position"] mutableCopy];
+        NSMutableArray *tempTiles = [_tiles mutableCopy];
         NSString *steps = _results.firstObject;
         int lastStep = 0;
-        CFTimeInterval duration = 0.7;
+        CFTimeInterval duration = 0.56;
         
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
@@ -127,7 +126,6 @@
         }];
         
         for (int idx = 0; idx < steps.length; idx++) {
-            [CATransaction begin];
             int nextStep = 0;
             if (steps.UTF8String[idx] == 'U') {
                 nextStep = lastStep - 4;
@@ -139,41 +137,20 @@
                 nextStep = lastStep + 1;
             }
             
-            CALayer *fromLayer = _tiles[lastStep];
-            CALayer *toLayer = _tiles[nextStep];
-            CGPoint fromPosition = fromLayer.position;
-            CGPoint toPosition = toLayer.position;
-            
-            
-            fromLayer.position = toPosition;
-            toLayer.position = fromPosition;
-            [_tiles exchangeObjectAtIndex:lastStep withObjectAtIndex:nextStep];
-            lastStep = nextStep;
-            
-            NSDictionary *dict = @{@"laststep":@(lastStep), @"nextstep":@(nextStep)};
-            [_animationValueDicts addObject:dict];
-//            POPBasicAnimation *fromAnimation = [POPBasicAnimation animationWithPropertyNamed:kPOPLayerPosition];
-//            fromAnimation.duration = duration;
-//            fromAnimation.beginTime = CACurrentMediaTime() + idx * duration + 0.1;
-//            fromAnimation.fromValue = [NSValue valueWithCGPoint:fromPosition];
-//            fromAnimation.toValue = [NSValue valueWithCGPoint:toPosition];
-//            fromAnimation.removedOnCompletion = NO;
-//            [fromLayer pop_addAnimation:fromAnimation forKey:nil];
-//            
-//            POPBasicAnimation *toAnimation = [POPBasicAnimation animationWithPropertyNamed:kPOPLayerPosition];
-//            toAnimation.duration = duration;
-//            toAnimation.beginTime = CACurrentMediaTime() + idx * duration + 0.1;
-//            toAnimation.fromValue = [NSValue valueWithCGPoint:toPosition];
-//            toAnimation.toValue = [NSValue valueWithCGPoint:fromPosition];
-//            toAnimation.removedOnCompletion = NO;
-//            [toLayer pop_addAnimation:toAnimation forKey:nil];
+            NSValue *fromValue = positions[lastStep];
+            NSValue *toValue = positions[nextStep];
+            CGPoint fromPosition = [fromValue CGPointValue];
+            CGPoint toPosition = [toValue CGPointValue];
+            CALayer *fromLayer = tempTiles[lastStep];
+            CALayer *toLayer = tempTiles[nextStep];
             
             CABasicAnimation *fromAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
             fromAnimation.duration = duration;
             fromAnimation.fromValue = [NSValue valueWithCGPoint:fromPosition];
             fromAnimation.toValue = [NSValue valueWithCGPoint:toPosition];
             fromAnimation.beginTime = CACurrentMediaTime() + idx * duration + 0.1;
-            fromAnimation.fillMode = kCAFillModeBoth;
+            fromAnimation.fillMode = kCAFillModeForwards;
+            fromAnimation.removedOnCompletion = NO;
             [fromLayer addAnimation:fromAnimation forKey:nil];
             
             CABasicAnimation *toAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
@@ -181,10 +158,12 @@
             toAnimation.fromValue = [NSValue valueWithCGPoint:toPosition];
             toAnimation.toValue = [NSValue valueWithCGPoint:fromPosition];
             toAnimation.beginTime = CACurrentMediaTime() + idx * duration + 0.1;
-            toAnimation.fillMode = kCAFillModeBoth;
+            toAnimation.fillMode = kCAFillModeForwards;
+            toAnimation.removedOnCompletion = NO;
             [toLayer addAnimation:toAnimation forKey:nil];
             
-            [CATransaction commit];
+            [tempTiles exchangeObjectAtIndex:lastStep withObjectAtIndex:nextStep];
+            lastStep = nextStep;
         }
         [CATransaction commit];
     }
@@ -192,7 +171,6 @@
 
 - (void)getResults:(NSNotification *)noti {
     CFAbsoluteTime executionTime = (CFAbsoluteTimeGetCurrent() - _startCalcTime);
-    NSLog(@"Calculating took %f s", executionTime);
     
     _results = noti.userInfo[@"resutls"];
     if (_results.count > 0) {
@@ -201,7 +179,7 @@
         int lastStep = 0;
         int itemsInRow = 6;
         int widthSpace = 8;
-        int heightSpace = 6;
+        int heightSpace = 4;
         int tilesWidth = (self.view.bounds.size.width - (itemsInRow + 1) * widthSpace) / itemsInRow;
         int tilesHeight = tilesWidth;
         int rows = -1;
@@ -231,7 +209,7 @@
             if (column == 0) rows += 1;
             
             int originX = column * (widthSpace + tilesWidth) + widthSpace;
-            int originY = rows * (heightSpace + tilesHeight) + heightSpace + (20+150+8+30);
+            int originY = rows * (heightSpace + tilesHeight) + heightSpace + (20+150+8+30+60);
             [self drawFrame:beginFrame withSquareRect:CGRectMake(originX, originY, tilesWidth, tilesHeight)];
         }
     }
@@ -240,6 +218,19 @@
     [_calcButton setTitle:@"Show animation" forState:UIControlStateNormal];
     _calcButton.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
     _calcButton.enabled = YES;
+    
+    if (_resultLabel == nil) {
+        _resultLabel = [UILabel new];
+        _resultLabel.frame = CGRectMake(8, 20+150+8+30+8, self.view.bounds.size.width - 16, 21);
+        _resultLabel.font = [UIFont systemFontOfSize:14];
+        NSString *steps = _results.firstObject;
+        _resultLabel.textColor = [UIColor colorWithRed:140.f/255.f green:140.f/255.f blue:140.f/255.f alpha:1];
+        _resultLabel.textAlignment = NSTextAlignmentCenter;
+        _resultLabel.numberOfLines = 0;
+        _resultLabel.text = [NSString stringWithFormat:@"Results: %@, count: %ld, time: %.3f s, %i threads", steps, steps.length,executionTime, [_puzzle availableThreadCount]];
+        [_resultLabel sizeToFit];
+        [self.view addSubview:_resultLabel];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
