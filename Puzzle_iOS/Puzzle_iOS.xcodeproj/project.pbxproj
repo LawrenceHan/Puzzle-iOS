@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0234AAF51E00595F00B35AA7 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0234AAF41E00595F00B35AA7 /* Launch Screen.storyboard */; };
+		024BB1151E01128100037812 /* PuzzleSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 024BB1141E01128100037812 /* PuzzleSwift.swift */; };
 		02E065F21DFE3CF50087E4DC /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E065F11DFE3CF50087E4DC /* main.m */; };
 		02E065F51DFE3CF50087E4DC /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E065F41DFE3CF50087E4DC /* AppDelegate.m */; };
 		02E065F81DFE3CF50087E4DC /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E065F71DFE3CF50087E4DC /* ViewController.m */; };
@@ -20,6 +21,8 @@
 
 /* Begin PBXFileReference section */
 		0234AAF41E00595F00B35AA7 /* Launch Screen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
+		024BB1131E01128100037812 /* Puzzle_iOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Puzzle_iOS-Bridging-Header.h"; sourceTree = "<group>"; };
+		024BB1141E01128100037812 /* PuzzleSwift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PuzzleSwift.swift; sourceTree = "<group>"; };
 		02E065ED1DFE3CF50087E4DC /* Puzzle_iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Puzzle_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		02E065F11DFE3CF50087E4DC /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		02E065F31DFE3CF50087E4DC /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -99,6 +102,8 @@
 				02E0660F1DFE4F980087E4DC /* PUZTimeRecord.m */,
 				02E066101DFE4F980087E4DC /* Puzzle.h */,
 				02E066111DFE4F980087E4DC /* Puzzle.m */,
+				024BB1141E01128100037812 /* PuzzleSwift.swift */,
+				024BB1131E01128100037812 /* Puzzle_iOS-Bridging-Header.h */,
 			);
 			name = Helper;
 			sourceTree = "<group>";
@@ -142,6 +147,7 @@
 					02E065EC1DFE3CF50087E4DC = {
 						CreatedOnToolsVersion = 8.1;
 						DevelopmentTeam = 2L4985KKX7;
+						LastSwiftMigration = 0810;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -184,6 +190,7 @@
 			files = (
 				02E065F81DFE3CF50087E4DC /* ViewController.m in Sources */,
 				02E065F51DFE3CF50087E4DC /* AppDelegate.m in Sources */,
+				024BB1151E01128100037812 /* PuzzleSwift.swift in Sources */,
 				02E066131DFE4F980087E4DC /* PUZTimeRecord.m in Sources */,
 				02E066141DFE4F980087E4DC /* Puzzle.m in Sources */,
 				02E065F21DFE3CF50087E4DC /* main.m in Sources */,
@@ -297,11 +304,15 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				DEVELOPMENT_TEAM = 2L4985KKX7;
 				INFOPLIST_FILE = Puzzle_iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.hanguang.app.Puzzle-iOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Puzzle_iOS/Puzzle_iOS-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
 		};
@@ -309,11 +320,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				DEVELOPMENT_TEAM = 2L4985KKX7;
 				INFOPLIST_FILE = Puzzle_iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.hanguang.app.Puzzle-iOS";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "Puzzle_iOS/Puzzle_iOS-Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
 		};

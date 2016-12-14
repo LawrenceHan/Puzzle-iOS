@@ -8,15 +8,18 @@
 
 #import "ViewController.h"
 #import "Puzzle.h"
+#import "Puzzle_iOS-Swift.h"
 
 @interface ViewController () <CAAnimationDelegate>
 @property (nonatomic, strong) Puzzle *puzzle;
 @property (nonatomic, assign) CFAbsoluteTime startCalcTime;
 @property (nonatomic, assign) BOOL foundResults;
 @property (nonatomic, strong) UIButton *calcButton;
+@property (nonatomic, strong) UIButton *calcSingleThreadButton;
 @property (nonatomic, strong) NSMutableArray<CALayer *> *tiles;
 @property (nonatomic, strong) NSArray *results;
 @property (nonatomic, strong) UILabel *resultLabel;
+@property (nonatomic, strong) PuzzleSwift *puzzleSwift;
 @end
 
 @implementation ViewController
@@ -29,6 +32,7 @@
     _foundResults = NO;
     _tiles = [NSMutableArray new];
     _puzzle = [[Puzzle alloc] initWithBeginFrame:@"wrbbrrbbrrbbrrbb" endFrame:@"wbrbbrbrrbrbbrbr" columns:4 row:4];
+    _puzzleSwift = [[PuzzleSwift alloc] init];
     
     // Draw begin frame
     CGRect rect = CGRectMake((self.view.bounds.size.width - 150)/2, 20, 150, 150);
@@ -36,13 +40,23 @@
     
     _calcButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [_calcButton addTarget:self action:@selector(startCalculate:) forControlEvents:UIControlEventTouchUpInside];
-    _calcButton.frame = CGRectMake((self.view.bounds.size.width - 150)/2, 20+150+8, 150, 30);
+    _calcButton.frame = CGRectMake(8, 20+150+8, 150, 30);
     [_calcButton setTitle:@"START" forState:UIControlStateNormal];
     [_calcButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     _calcButton.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
     _calcButton.layer.masksToBounds = YES;
     _calcButton.layer.cornerRadius = 4;
     [self.view addSubview:_calcButton];
+    
+    _calcSingleThreadButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    [_calcSingleThreadButton addTarget:self action:@selector(startOnSingleThread:) forControlEvents:UIControlEventTouchUpInside];
+    _calcSingleThreadButton.frame = CGRectMake(8+150+4, 20+150+8, 150, 30);
+    [_calcSingleThreadButton setTitle:@"START 1 THREAD" forState:UIControlStateNormal];
+    [_calcSingleThreadButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    _calcSingleThreadButton.backgroundColor = [UIColor colorWithRed:0.46 green:0.7 blue:0.32 alpha:1.0];
+    _calcSingleThreadButton.layer.masksToBounds = YES;
+    _calcSingleThreadButton.layer.cornerRadius = 4;
+    [self.view addSubview:_calcSingleThreadButton];
 }
 
 - (void)dealloc {
@@ -97,6 +111,11 @@
     }
     
     [self.view.layer addSublayer:bgLayer];
+}
+
+- (void)startOnSingleThread:(UIButton *)sender {
+    _startCalcTime = CFAbsoluteTimeGetCurrent();
+    [_puzzleSwift calcuateShortestWay];
 }
 
 - (void)startCalculate:(UIButton *)sender {
@@ -176,6 +195,9 @@
     if (_results.count > 0) {
         NSString *steps = _results.firstObject;
         NSString *beginFrame = _puzzle.beginFrame;
+        char *chars = malloc(_puzzle.beginFrame.length+1);
+        memcpy(chars, beginFrame.UTF8String, _puzzle.beginFrame.length+1);
+        
         int lastStep = 0;
         int itemsInRow = 6;
         int widthSpace = 8;
@@ -185,9 +207,6 @@
         int rows = -1;
         
         for (int idx = 0; idx < (int)steps.length; idx++) {
-            char *chars = malloc(_puzzle.beginFrame.length+1);
-            memcpy(chars, beginFrame.UTF8String, _puzzle.beginFrame.length+1);
-            
             int nextStep = 0;
             if (steps.UTF8String[idx] == 'U') {
                 nextStep = lastStep - 4;
