@@ -37,7 +37,7 @@ public final class PuzzleSwift: NSObject {
         }
     }
     
-    public func calcuateShortestWay() {
+    @objc public func calcuateShortestWay() {
         DispatchQueue.global(qos: .userInitiated).async { [unowned self] in
             let route = Route(previousStep: self.stepBegin, nextStep: self.stepBegin, frame: self.puzzleBegin)
             
