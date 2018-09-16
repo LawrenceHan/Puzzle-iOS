@@ -124,7 +124,7 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
     
     
 #if TARGET_OS_SIMULATOR
-    _availableThreadCount = 4;
+    _availableThreadCount = 1;
 #elif TARGET_OS_IPHONE
     _availableThreadCount = cpuCoreCount();
 #endif
