@@ -64,6 +64,7 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
     NSMutableDictionary *_moveTileCountDict;
     int _availableThreadCount;
     PUZTimeRecord *_timeRecorder;
+    int64_t _calcuatedFramesCount;
 }
 
 - (instancetype)initWithBeginFrame:(NSString *)beginFrame endFrame:(NSString *)endFrame columns:(int)columns row:(int)rows {
@@ -121,10 +122,10 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
     _routesNextQueue = [@[frame] mutableCopy];
     _routesCount = 0;
     _frameSnapshot[[NSString stringWithFormat:@"%s", chars]] = @(frame.steps.length);
-    
+    _calcuatedFramesCount += 1;
     
 #if TARGET_OS_SIMULATOR
-    _availableThreadCount = 1;
+    _availableThreadCount = 2;
 #elif TARGET_OS_IPHONE
     _availableThreadCount = cpuCoreCount();
 #endif
@@ -173,7 +174,7 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
                 _isThreadRunning = NO;
                 _foundResults = YES;
                 for (NSString *result in _stepResults) {
-                    NSLog(@"Steps: %@, steps count: %ld == thread: %@", result, (long)result.length, [NSThread currentThread].name);
+                    NSLog(@"Steps: %@, steps count: %ld total frame calcuated: %lld == thread: %@", result, result.length, _calcuatedFramesCount, [NSThread currentThread].name);
                 }
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [[NSNotificationCenter defaultCenter] postNotificationName:PuzzleFinishedNotification object:nil userInfo:@{@"resutls":[_stepResults copy]}];
@@ -381,12 +382,10 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #endif
     NSInteger length = [[_frameSnapshot objectForKey:newFrame] integerValue];
     if (length != 0) {
-        return;
-        /* Uncommnt below code for calcuating mutiple results with same steps
+//        return;
         if (length < stepsLength) {
             return;
         }
-         */
     } else {
         [_frameSnapshot setObject:@(stepsLength) forKey:newFrame];
     }
@@ -405,6 +404,7 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 
     pthread_mutex_lock(&_routesQueueMutexLock);
     [_routesNextQueue addObject:newPuzzleFrame];
+    _calcuatedFramesCount += 1;
     pthread_mutex_unlock(&_routesQueueMutexLock);
 #ifdef RecordTime
     [_timeRecorder continueTimeRecord:routesKey];

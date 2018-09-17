@@ -8,38 +8,82 @@
 
 import UIKit
 
-struct Tile: OptionSet, Hashable {
-    var rawValue: UInt8
-    
-    init(rawValue: Tile.RawValue) {
-        self.rawValue = rawValue
-    }
-    
-    typealias RawValue = UInt8
-    
-    static let white = Tile(rawValue: 1 << 0)
-    static let red = Tile(rawValue: 1 << 1)
-    static let blue = Tile(rawValue: 1 << 2)
-    
-    mutating func changeColor(_ color: Tile) {
-        rawValue = color.rawValue
+extension Array where Element == UInt8 {
+    public func toHexString() -> String {
+        return `lazy`.reduce("") {
+            var s = String($1, radix: 16)
+            if s.count == 1 {
+                s = "0" + s
+            }
+            return $0 + s
+        }
     }
 }
 
-extension Tile: Equatable {
-    static func ==(lhs: Tile, rhs: Tile) -> Bool {
-        return lhs.rawValue == rhs.rawValue
+extension UInt8 {
+    static let white: UInt8 = 1 << 0
+    static let red: UInt8 = 1 << 1
+    static let blue: UInt8 = 1 << 2
+}
+
+extension Data {
+    static let beginFrame = Data(bytes: [
+        .white, .red, .blue, .blue,
+        .red, .red, .blue, .blue,
+        .red, .red, .blue, .blue,
+        .red, .red, .blue, .blue
+        ]
+    )
+    
+    static let endFrame = Data(bytes: [
+        .white, .blue, .red, .blue,
+        .blue, .red, .blue, .red,
+        .red, .blue, .red, .blue,
+        .blue, .red, .blue, .red
+        ]
+    )
+    
+    public var bytes: Array<UInt8> {
+        return Array(self)
+    }
+    
+    public func toHexString() -> String {
+        return bytes.toHexString()
     }
 }
+
+//struct Tile: OptionSet, Hashable {
+//    var rawValue: UInt8
+//
+//    init(rawValue: Tile.RawValue) {
+//        self.rawValue = rawValue
+//    }
+//
+//    typealias RawValue = UInt8
+//
+//    static let white = Tile(rawValue: 1 << 0)
+//    static let red = Tile(rawValue: 1 << 1)
+//    static let blue = Tile(rawValue: 1 << 2)
+//
+//    mutating func changeColor(_ color: Tile) {
+//        rawValue = color.rawValue
+//    }
+//}
+//
+//extension Tile: Equatable {
+//    static func ==(lhs: Tile, rhs: Tile) -> Bool {
+//        return lhs.rawValue == rhs.rawValue
+//    }
+//}
 
 private struct PuzzleFrame {
     let previousStep: Int8
     let currentStep: Int8
-    let frame: [Tile]
+    let frame: Data
     let steps: [Int8]
     let key: Int
     
-    init(previousStep: Int8, currentStep: Int8, frame: [Tile], steps: [Int8]) {
+    init(previousStep: Int8, currentStep: Int8, frame: Data, steps: [Int8]) {
         self.previousStep = previousStep;
         self.currentStep = currentStep
         self.frame = frame
@@ -58,10 +102,7 @@ private struct PuzzleFrame {
 //                break
 //            }
 //        }
-        
-        let bytes: [UInt8] = frame.map { $0.rawValue }
-        self.key = Data(bytes: bytes).hashValue // or key.hashValue
-        print(key)
+        self.key = frame.toHexString().hashValue
     }
 }
 
@@ -81,10 +122,10 @@ extension PuzzleFrame: Equatable {
 }
 
 private struct Puzzle {
-    let beginFrame: [Tile]
-    let endFrame: [Tile]
+    let beginFrame: Data
+    let endFrame: Data
     
-    init(_ begin: [Tile], end: [Tile]) {
+    init(_ begin: Data, end: Data) {
         self.beginFrame = begin
         self.endFrame = end
     }
@@ -118,26 +159,21 @@ private struct Puzzle {
                     var nextStep: Int8 = currentStep - 4 // upward
                     if nextStep >= 0 && nextStep != previousStep {
                         self.switchTiles(currentFrame, nextStep, -4, &nextFramesQueue, frameCount: &calcuatedFramesCount, snapshots: &snapshots, result: &result)
-//                        self.moveBlock(routeOld: routeOld, nextStep: nextStep, direction: "U",
-//                                       routesNext: &routesNext, routeIndexNext: &routeIndexNext)
                     }
                     
                     nextStep = currentStep + 4 // downward
                     if nextStep < self.totalTilesCount && nextStep != previousStep {
                         self.switchTiles(currentFrame, nextStep, 4, &nextFramesQueue, frameCount: &calcuatedFramesCount, snapshots: &snapshots, result: &result)
-//                        self.moveBlock(routeOld: routeOld, nextStep: nextStep, direction: "D", routesNext: &routesNext, routeIndexNext: &routeIndexNext)
                     }
                     
                     nextStep = currentStep - 1 // leftward
                     if Int(currentStep) % self.columnCount - 1 >= 0 && nextStep != previousStep {
                         self.switchTiles(currentFrame, nextStep, -1, &nextFramesQueue, frameCount: &calcuatedFramesCount, snapshots: &snapshots, result: &result)
-//                        self.moveBlock(routeOld: routeOld, nextStep: nextStep, direction: "L", routesNext: &routesNext, routeIndexNext: &routeIndexNext)
                     }
                     
                     nextStep = currentStep + 1 // rightward
                     if Int(currentStep) % self.columnCount + 1 < self.columnCount && nextStep != previousStep {
                         self.switchTiles(currentFrame, nextStep, 1, &nextFramesQueue, frameCount: &calcuatedFramesCount, snapshots: &snapshots, result: &result)
-//                        self.moveBlock(routeOld: routeOld, nextStep: nextStep, direction: "R", routesNext: &routesNext, routeIndexNext: &routeIndexNext)
                     }
                 }
                 
@@ -155,10 +191,12 @@ private struct Puzzle {
     
     private func switchTiles(_ currentFrame: PuzzleFrame, _ nextStep: Int8, _ direction: Int8, _ nextFramesQueue: inout [PuzzleFrame], frameCount: inout UInt, snapshots: inout [AnyHashable: Int], result: inout [Int8]) {
         
-        var frame: [Tile] = currentFrame.frame
-        let temp: Tile = frame[Int(currentFrame.currentStep)]
-        frame[Int(currentFrame.currentStep)].changeColor(frame[Int(nextStep)])
-        frame[Int(nextStep)].changeColor(temp)
+        var frame: Data = currentFrame.frame
+        let currentStep: Int = Int(currentFrame.currentStep)
+        let nextStepInt: Int = Int(nextStep)
+        let temp: UInt8 = frame[currentStep]
+        frame[currentStep] = frame[nextStepInt]
+        frame[nextStepInt] = temp
         
         let nextPuzzleFrame: PuzzleFrame = PuzzleFrame(previousStep: currentFrame.currentStep, currentStep: nextStep, frame: frame, steps: currentFrame.steps+[direction])
         
@@ -167,9 +205,10 @@ private struct Puzzle {
         }
         
         if snapshots[nextPuzzleFrame.key] != nil {
-            if snapshots[nextPuzzleFrame.key]! < nextPuzzleFrame.steps.count {
-                return
-            }
+            return
+//            if snapshots[nextPuzzleFrame.frame]! < nextPuzzleFrame.steps.count {
+//                return
+//            }
         } else {
             snapshots[nextPuzzleFrame.key] = nextPuzzleFrame.steps.count
         }
@@ -181,35 +220,23 @@ private struct Puzzle {
 
 @objc
 public final class PuzzleSwift: NSObject {
-//    let puzzleBegin = "wrbbrrbbrrbbrrbb"
-//    let puzzleEnd = "wbrbbrbrrbrbbrbr"
-//
-//    let stepBegin: Int = 0
-//    let stepEnd: Int = 0
-//    let columnCount: Int = 4
-//    let rowCount: Int = 4
-//    var totalBlockCount: Int {
-//        return columnCount * rowCount
-//    }
-//
-//    var stepResults = [String]()
-//    fileprivate var routeList = [Route]()
-//    var routeCount: Int = 0
-//    var snapshots = [String : Int]()
+    let puzzleBegin = "wrbbrrbbrrbbrrbb"
+    let puzzleEnd = "wbrbbrbrrbrbbrbr"
+
+    let stepBegin: Int = 0
+    let stepEnd: Int = 0
+    let columnCount: Int = 4
+    let rowCount: Int = 4
+    var totalBlockCount: Int {
+        return columnCount * rowCount
+    }
+
+    var stepResults = [String]()
+    fileprivate var routeList = [Route]()
+    var routeCount: Int = 0
+    var snapshots = [String : Int]()
     
-    fileprivate let puzzle: Puzzle = Puzzle(
-        [
-            .white, .red, .blue, .blue,
-            .red, .red, .blue, .blue,
-            .red, .red, .blue, .blue,
-            .red, .red, .blue, .blue
-        ], end:
-        [
-            .white, .blue, .red, .blue,
-            .blue, .red, .blue, .red,
-            .red, .blue, .red, .blue,
-            .blue, .red, .blue, .red
-        ])
+    fileprivate let puzzle: Puzzle = Puzzle(Data.beginFrame, end: Data.endFrame)
 
     @objc public func calcuateShortestWay() {
         DispatchQueue.global(qos: .userInitiated).async { [unowned self] in
@@ -287,7 +314,7 @@ public final class PuzzleSwift: NSObject {
                             return ""
                         }
                     })
-                    
+
                     NotificationCenter.default.post(name: NSNotification.Name(rawValue: "com.hanguang.app.puzzle.PuzzleFinishedNotification"),
                                                     object: nil, userInfo: ["resutls": [stringResult as NSString]])
                 }
@@ -295,32 +322,33 @@ public final class PuzzleSwift: NSObject {
         }
     }
 
-//    private func moveBlock(routeOld: Route, nextStep: Int, direction: String, routesNext: inout [Route], routeIndexNext: inout Int) {
-//        let routeNew = Route(previousStep: routeOld.nextStep, nextStep: nextStep, frame: "")
-//        routeNew.stepsList = routeOld.stepsList.appending(direction)
-//        var frame = routeOld.frame
-//        let previousIndex = frame.index(frame.startIndex, offsetBy: routeNew.previousStep)
-//        let nextIndex = frame.index(frame.startIndex, offsetBy: routeNew.nextStep)
-//        let previousBlock = frame[previousIndex]
-//        let nextBlock = frame[nextIndex]
-//        frame = frame.replacingCharacters(in: previousIndex..<frame.index(after: previousIndex), with: String(nextBlock))
-//        frame = frame.replacingCharacters(in: nextIndex..<frame.index(after: nextIndex), with: String(previousBlock))
-//        routeNew.frame = frame
-//
-//        if routeNew.frame.hashValue == puzzleEnd.hashValue {
-//            stepResults.append(routeNew.stepsList)
-//        }
-//
-//        if snapshots[routeNew.frame] != nil {
+    private func moveBlock(routeOld: Route, nextStep: Int, direction: String, routesNext: inout [Route], routeIndexNext: inout Int) {
+        let routeNew = Route(previousStep: routeOld.nextStep, nextStep: nextStep, frame: "")
+        routeNew.stepsList = routeOld.stepsList.appending(direction)
+        var frame = routeOld.frame
+        let previousIndex = frame.index(frame.startIndex, offsetBy: routeNew.previousStep)
+        let nextIndex = frame.index(frame.startIndex, offsetBy: routeNew.nextStep)
+        let previousBlock = frame[previousIndex]
+        let nextBlock = frame[nextIndex]
+        frame = frame.replacingCharacters(in: previousIndex..<frame.index(after: previousIndex), with: String(nextBlock))
+        frame = frame.replacingCharacters(in: nextIndex..<frame.index(after: nextIndex), with: String(previousBlock))
+        routeNew.frame = frame
+
+        if routeNew.frame.hashValue == puzzleEnd.hashValue {
+            stepResults.append(routeNew.stepsList)
+        }
+
+        if snapshots[routeNew.frame] != nil {
+            return;
 //            if snapshots[routeNew.frame]! < routeNew.stepsList.characters.count {
 //                return
 //            }
-//        } else {
-//            snapshots[routeNew.frame] = routeNew.stepsList.characters.count
-//        }
-//        routesNext.append(routeNew)
-//        routeIndexNext += 1
-//    }
+        } else {
+            snapshots[routeNew.frame] = routeNew.stepsList.characters.count
+        }
+        routesNext.append(routeNew)
+        routeIndexNext += 1
+    }
 }
 
 private class Route: CustomStringConvertible {
