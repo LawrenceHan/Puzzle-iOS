@@ -32,22 +32,36 @@ extension Tile: Equatable {
     }
 }
 
-private struct PuzzleFrame: Hashable {
-    var hashValue: Int {
-        let data: Data = Data(bytes: frame.map { $0.rawValue })
-        return data.hashValue
-    }
-    
+private struct PuzzleFrame {
     let previousStep: Int8
     let currentStep: Int8
     let frame: [Tile]
     let steps: [Int8]
+    let key: Int
     
     init(previousStep: Int8, currentStep: Int8, frame: [Tile], steps: [Int8]) {
         self.previousStep = previousStep;
         self.currentStep = currentStep
         self.frame = frame
         self.steps = steps
+        
+//        var key = ""
+//        for tile in frame {
+//            switch tile.rawValue {
+//            case 1 << 0:
+//                key += "w"
+//            case 1 << 1:
+//                key += "r"
+//            case 1 << 2:
+//                key += "b"
+//            default :
+//                break
+//            }
+//        }
+        
+        let bytes: [UInt8] = frame.map { $0.rawValue }
+        self.key = Data(bytes: bytes).hashValue // or key.hashValue
+        print(key)
     }
 }
 
@@ -81,16 +95,16 @@ private struct Puzzle {
         return columnCount * rowCount
     }
     
-    func calcuateTheShortestWay(_ completion: ([Int8]) -> Void) {
+    func calcuateTheShortestWay(_ completion: @escaping ([Int8]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
             var result: [Int8] = []
             var calcuatedFramesCount: UInt = 0
-            var snapshots: [PuzzleFrame: Int] = [:]
+            var snapshots: [AnyHashable: Int] = [:]
             
             let puzzleFrame = PuzzleFrame(previousStep: 0, currentStep: 0, frame: self.beginFrame, steps: [])
             var currentFramesQueue: [PuzzleFrame] = [puzzleFrame]
             var nextFramesQueue: [PuzzleFrame] = []
-            snapshots[puzzleFrame] = puzzleFrame.steps.count
+            snapshots[puzzleFrame.key] = puzzleFrame.steps.count
             calcuatedFramesCount += 1
             
             var found = false
@@ -130,10 +144,7 @@ private struct Puzzle {
                 if !result.isEmpty {
                     print("Result: \(result), total frame calcuated: \(calcuatedFramesCount)")
                     found = true
-                    DispatchQueue.main.async {
-                        NotificationCenter.default.post(name: NSNotification.Name(rawValue: "com.hanguang.app.puzzle.PuzzleFinishedNotification"),
-                                                        object: nil, userInfo: ["resutls": result])
-                    }
+                    completion(result)
                 }
                 
                 currentFramesQueue = nextFramesQueue
@@ -142,25 +153,25 @@ private struct Puzzle {
         }
     }
     
-    private func switchTiles(_ currentFrame: PuzzleFrame, _ nextStep: Int8, _ direction: Int8, _ nextFramesQueue: inout [PuzzleFrame], frameCount: inout UInt, snapshots: inout [PuzzleFrame: Int], result: inout [Int8]) {
+    private func switchTiles(_ currentFrame: PuzzleFrame, _ nextStep: Int8, _ direction: Int8, _ nextFramesQueue: inout [PuzzleFrame], frameCount: inout UInt, snapshots: inout [AnyHashable: Int], result: inout [Int8]) {
         
-        var newFrame: [Tile] = currentFrame.frame
-        let temp: Tile = newFrame[Int(currentFrame.previousStep)]
-        newFrame[Int(currentFrame.previousStep)].changeColor(newFrame[Int(nextStep)])
-        newFrame[Int(nextStep)].changeColor(temp)
+        var frame: [Tile] = currentFrame.frame
+        let temp: Tile = frame[Int(currentFrame.currentStep)]
+        frame[Int(currentFrame.currentStep)].changeColor(frame[Int(nextStep)])
+        frame[Int(nextStep)].changeColor(temp)
         
-        let nextPuzzleFrame: PuzzleFrame = PuzzleFrame(previousStep: currentFrame.currentStep, currentStep: nextStep, frame: newFrame, steps: currentFrame.steps+[direction])
+        let nextPuzzleFrame: PuzzleFrame = PuzzleFrame(previousStep: currentFrame.currentStep, currentStep: nextStep, frame: frame, steps: currentFrame.steps+[direction])
         
         if nextPuzzleFrame.frame == endFrame {
             result = nextPuzzleFrame.steps
         }
         
-        if snapshots[nextPuzzleFrame] != nil {
-            if snapshots[nextPuzzleFrame]! < nextPuzzleFrame.steps.count {
+        if snapshots[nextPuzzleFrame.key] != nil {
+            if snapshots[nextPuzzleFrame.key]! < nextPuzzleFrame.steps.count {
                 return
             }
         } else {
-            snapshots[nextPuzzleFrame] = nextPuzzleFrame.steps.count
+            snapshots[nextPuzzleFrame.key] = nextPuzzleFrame.steps.count
         }
         
         nextFramesQueue.append(nextPuzzleFrame)
@@ -262,23 +273,23 @@ public final class PuzzleSwift: NSObject {
 //            }
             self.puzzle.calcuateTheShortestWay({ (result) in
                 DispatchQueue.main.async {
-                    let stringResult = result.map({ (value) -> String in
+                    let stringResult: String = result.reduce("", { (result, value) -> String in
                         switch value {
                         case -4:
-                            return "D"
+                            return result + "U"
                         case 4:
-                            return "U"
+                            return result + "D"
                         case -1:
-                            return "L"
+                            return result + "L"
                         case 1:
-                            return "R"
+                            return result + "R"
                         default:
                             return ""
                         }
                     })
                     
                     NotificationCenter.default.post(name: NSNotification.Name(rawValue: "com.hanguang.app.puzzle.PuzzleFinishedNotification"),
-                                                    object: nil, userInfo: ["resutls": stringResult])
+                                                    object: nil, userInfo: ["resutls": [stringResult as NSString]])
                 }
             })
         }
