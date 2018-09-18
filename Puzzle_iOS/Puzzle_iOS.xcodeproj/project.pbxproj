@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0234AAF51E00595F00B35AA7 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0234AAF41E00595F00B35AA7 /* Launch Screen.storyboard */; };
 		024BB1151E01128100037812 /* PuzzleSwift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 024BB1141E01128100037812 /* PuzzleSwift.swift */; };
+		027AFA6F2150EABC00B4DA0A /* MurMurHash32.m in Sources */ = {isa = PBXBuildFile; fileRef = 027AFA6E2150EABC00B4DA0A /* MurMurHash32.m */; };
 		02E065F21DFE3CF50087E4DC /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E065F11DFE3CF50087E4DC /* main.m */; };
 		02E065F51DFE3CF50087E4DC /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E065F41DFE3CF50087E4DC /* AppDelegate.m */; };
 		02E065F81DFE3CF50087E4DC /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 02E065F71DFE3CF50087E4DC /* ViewController.m */; };
@@ -23,6 +24,8 @@
 		0234AAF41E00595F00B35AA7 /* Launch Screen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		024BB1131E01128100037812 /* Puzzle_iOS-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Puzzle_iOS-Bridging-Header.h"; sourceTree = "<group>"; };
 		024BB1141E01128100037812 /* PuzzleSwift.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PuzzleSwift.swift; sourceTree = "<group>"; };
+		027AFA6D2150EABC00B4DA0A /* MurMurHash32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MurMurHash32.h; sourceTree = "<group>"; };
+		027AFA6E2150EABC00B4DA0A /* MurMurHash32.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MurMurHash32.m; sourceTree = "<group>"; };
 		02E065ED1DFE3CF50087E4DC /* Puzzle_iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Puzzle_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		02E065F11DFE3CF50087E4DC /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		02E065F31DFE3CF50087E4DC /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -96,6 +99,8 @@
 		02E0660B1DFE4F8D0087E4DC /* Helper */ = {
 			isa = PBXGroup;
 			children = (
+				027AFA6D2150EABC00B4DA0A /* MurMurHash32.h */,
+				027AFA6E2150EABC00B4DA0A /* MurMurHash32.m */,
 				02E0660C1DFE4F980087E4DC /* FastestThreadSafeDictionary.h */,
 				02E0660D1DFE4F980087E4DC /* FastestThreadSafeDictionary.m */,
 				02E0660E1DFE4F980087E4DC /* PUZTimeRecord.h */,
@@ -190,6 +195,7 @@
 			files = (
 				02E065F81DFE3CF50087E4DC /* ViewController.m in Sources */,
 				02E065F51DFE3CF50087E4DC /* AppDelegate.m in Sources */,
+				027AFA6F2150EABC00B4DA0A /* MurMurHash32.m in Sources */,
 				024BB1151E01128100037812 /* PuzzleSwift.swift in Sources */,
 				02E066131DFE4F980087E4DC /* PUZTimeRecord.m in Sources */,
 				02E066141DFE4F980087E4DC /* Puzzle.m in Sources */,

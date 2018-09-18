@@ -8,6 +8,87 @@
 
 import UIKit
 
+/*
+private let _seed: UInt32 = 4157243346
+private let c1: UInt32 = 0xcc9e2d51
+private let c2: UInt32 = 0x1b873593
+
+@inline(__always)
+func murmurhash32(_ key: UnsafePointer<UInt8>, len: Int, seed: UInt32) -> Int32 {
+    let data = key
+    let nblocks: Int = len/4
+    var h1: UInt32 = seed
+    
+    // body
+    
+    let blocks = UnsafePointer<UInt32>(OpaquePointer(data+nblocks*4))
+    
+    for i in -nblocks..<2 {
+        var k1: UInt32 = getblock(blocks, i: i)
+        
+        k1 *= c1
+        k1 = rotl32(k1, 15)
+        k1 *= c2
+        
+        h1 ^= k1
+        h1 = rotl32(h1, 13)
+        h1 = h1*5+0xe6546b64
+    }
+    
+    // tail
+    
+    let tail = UnsafePointer<UInt8>(OpaquePointer(data+nblocks*4))
+    
+    var k1: UInt32 = 0
+    
+    switch len & 3 {
+    case 3:
+        k1 ^= UInt32(tail[2] << 16)
+        fallthrough
+    case 2:
+        k1 ^= UInt32(tail[1] << 8)
+        fallthrough
+    case 1:
+        k1 ^= UInt32(tail[0])
+        k1 *= c1
+        k1 = rotl32(k1, 15)
+        k1 *= c2
+        h1 ^= k1
+    default:
+        break
+    }
+    
+    // finalization
+    
+    h1 ^= UInt32(len)
+    h1 = fmix(h1)
+    
+    return Int32(h1)
+}
+
+@inline(__always)
+func getblock(_ p: UnsafePointer<UInt32>, i: Int) -> UInt32 {
+    return p[i]
+}
+
+@inline(__always)
+func rotl32(_ x: UInt32, _ r: Int8) -> UInt32 {
+    return (x << r) | (x >> (32-r))
+}
+
+@inline(__always)
+func fmix(_ h: UInt32) -> UInt32 {
+    var h = h
+    h ^= h >> 16
+    h *= 0x85ebca6b
+    h ^= h >> 13
+    h *= 0xc2b2ae35
+    h ^= h >> 16
+    
+    return h
+}
+ */
+
 extension Array where Element == UInt8 {
     public func toHexString() -> String {
         return `lazy`.reduce("") {
@@ -27,21 +108,19 @@ extension UInt8 {
 }
 
 extension Data {
-    static let beginFrame = Data(bytes: [
+    static let beginFrame: [UInt8] = [
         .white, .red, .blue, .blue,
         .red, .red, .blue, .blue,
         .red, .red, .blue, .blue,
         .red, .red, .blue, .blue
-        ]
-    )
+    ]
     
-    static let endFrame = Data(bytes: [
+    static let endFrame: [UInt8] = [
         .white, .blue, .red, .blue,
         .blue, .red, .blue, .red,
         .red, .blue, .red, .blue,
         .blue, .red, .blue, .red
-        ]
-    )
+    ]
     
     public var bytes: Array<UInt8> {
         return Array(self)
@@ -79,19 +158,19 @@ extension Data {
 private struct PuzzleFrame {
     let previousStep: Int8
     let currentStep: Int8
-    let frame: Data
+    let frame: [UInt8]
     let steps: [Int8]
-    let key: Int
+    let key: Int32
     
-    init(previousStep: Int8, currentStep: Int8, frame: Data, steps: [Int8]) {
+    init(previousStep: Int8, currentStep: Int8, frame: [UInt8], steps: [Int8]) {
         self.previousStep = previousStep;
         self.currentStep = currentStep
         self.frame = frame
         self.steps = steps
         
 //        var key = ""
-//        for tile in frame {
-//            switch tile.rawValue {
+//        for value in frame.bytes {
+//            switch value {
 //            case 1 << 0:
 //                key += "w"
 //            case 1 << 1:
@@ -102,7 +181,8 @@ private struct PuzzleFrame {
 //                break
 //            }
 //        }
-        self.key = frame.toHexString().hashValue
+//        self.key = key.hashValue
+        self.key = murMurHash32(UnsafeMutableRawPointer(mutating: frame), Int32(frame.count))
     }
 }
 
@@ -122,10 +202,10 @@ extension PuzzleFrame: Equatable {
 }
 
 private struct Puzzle {
-    let beginFrame: Data
-    let endFrame: Data
+    let beginFrame: [UInt8]
+    let endFrame: [UInt8]
     
-    init(_ begin: Data, end: Data) {
+    init(_ begin: [UInt8], end: [UInt8]) {
         self.beginFrame = begin
         self.endFrame = end
     }
@@ -191,7 +271,7 @@ private struct Puzzle {
     
     private func switchTiles(_ currentFrame: PuzzleFrame, _ nextStep: Int8, _ direction: Int8, _ nextFramesQueue: inout [PuzzleFrame], frameCount: inout UInt, snapshots: inout [AnyHashable: Int], result: inout [Int8]) {
         
-        var frame: Data = currentFrame.frame
+        var frame: [UInt8] = currentFrame.frame
         let currentStep: Int = Int(currentFrame.currentStep)
         let nextStepInt: Int = Int(nextStep)
         let temp: UInt8 = frame[currentStep]
@@ -205,10 +285,10 @@ private struct Puzzle {
         }
         
         if snapshots[nextPuzzleFrame.key] != nil {
-            return
-//            if snapshots[nextPuzzleFrame.frame]! < nextPuzzleFrame.steps.count {
-//                return
-//            }
+//            return
+            if snapshots[nextPuzzleFrame.key]! < nextPuzzleFrame.steps.count {
+                return
+            }
         } else {
             snapshots[nextPuzzleFrame.key] = nextPuzzleFrame.steps.count
         }
@@ -344,7 +424,7 @@ public final class PuzzleSwift: NSObject {
 //                return
 //            }
         } else {
-            snapshots[routeNew.frame] = routeNew.stepsList.characters.count
+            snapshots[routeNew.frame] = routeNew.stepsList.count
         }
         routesNext.append(routeNew)
         routeIndexNext += 1
