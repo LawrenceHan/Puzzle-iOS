@@ -382,10 +382,10 @@ static NSString * const endIndexKey = @"com.hanguang.app.puzzle.endIndexKey";
 #endif
     NSInteger length = [[_frameSnapshot objectForKey:newFrame] integerValue];
     if (length != 0) {
-//        return;
-        if (length < stepsLength) {
-            return;
-        }
+        return;
+//        if (length < stepsLength) {
+//            return;
+//        }
     } else {
         [_frameSnapshot setObject:@(stepsLength) forKey:newFrame];
     }

@@ -285,10 +285,10 @@ private struct Puzzle {
         }
         
         if snapshots[nextPuzzleFrame.key] != nil {
-//            return
-            if snapshots[nextPuzzleFrame.key]! < nextPuzzleFrame.steps.count {
-                return
-            }
+            return
+//            if snapshots[nextPuzzleFrame.key]! < nextPuzzleFrame.steps.count {
+//                return
+//            }
         } else {
             snapshots[nextPuzzleFrame.key] = nextPuzzleFrame.steps.count
         }
